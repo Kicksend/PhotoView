@@ -75,6 +75,7 @@ public class PhotoViewAttacher implements View.OnTouchListener, VersionedGesture
 		 *            Drawable height.
 		 */
 		void onPhotoTap(View view, float x, float y);
+		void onLongPress(View view);
 	}
 
 	private class FlingRunnable implements Runnable {
@@ -225,6 +226,7 @@ public class PhotoViewAttacher implements View.OnTouchListener, VersionedGesture
 
 	// Gesture Detectors
 	private GestureDetector mGestureDetector;
+	private GestureDetector mLongPressGestureDetector;
 	private VersionedGestureDetector mScaleDragDetector;
 
 	// These are set so we don't keep allocating them on the heap
@@ -262,6 +264,13 @@ public class PhotoViewAttacher implements View.OnTouchListener, VersionedGesture
 			mGestureDetector = new GestureDetector(mImageView.getContext(),
 					new GestureDetector.SimpleOnGestureListener());
 			mGestureDetector.setOnDoubleTapListener(this);
+			
+			// Detect long press
+			mLongPressGestureDetector = new GestureDetector(mImageView.getContext(), new GestureDetector.SimpleOnGestureListener() {
+			    public void onLongPress(MotionEvent e) {
+					mPhotoTapListener.onLongPress(mImageView);
+			    }
+			});
 		}
 
 		// Make sure we using MATRIX Scale Type
@@ -451,6 +460,7 @@ public class PhotoViewAttacher implements View.OnTouchListener, VersionedGesture
 					// If we're flinging, and the user presses down, cancel
 					// fling
 					cancelFling();
+
 					break;
 
 				case MotionEvent.ACTION_CANCEL:
@@ -465,6 +475,11 @@ public class PhotoViewAttacher implements View.OnTouchListener, VersionedGesture
 						return true;
 					}
 					break;
+			}
+
+			// Check to see if the user long pressed
+			if (null != mLongPressGestureDetector && mLongPressGestureDetector.onTouchEvent(ev)) {
+				return true;
 			}
 
 			// Check to see if the user double tapped
@@ -508,7 +523,7 @@ public class PhotoViewAttacher implements View.OnTouchListener, VersionedGesture
 	public final void setOnMatrixChangeListener(OnMatrixChangedListener listener) {
 		mMatrixChangeListener = listener;
 	}
-
+	
 	/**
 	 * Register a callback to be invoked when the Photo displayed by this View
 	 * is tapped with a single tap.
